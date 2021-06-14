@@ -1,3 +1,4 @@
+open $typeraw ,">type.raw";
 open $energyraw ,">energy.raw";
 open $virialraw ,">virial.raw";
 open $forceraw ,">force.raw";
@@ -18,7 +19,7 @@ print $energyraw "$energy\n";
 @totalstress = `grep -A3 "total   stress" *.out`;
 #print @totalstress;
 for(0..$#totalstress){
-  if($totalstress[$_] =~ m/^\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)\s+\-?\d+\.\d+\s+\-?\d+\.\d+\s+\-?\d+\.\d+/g)
+  if($totalstress[$_] =~ m/^\s+\-?\d+\.\d+\s+\-?\d+\.\d+\s+\-?\d+\.\d+\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)/g)
   {
     push @stress,$1*1.13143935805,$2*1.13143935805,$3*1.13143935805;
   }   
@@ -42,15 +43,22 @@ for(0..$#out)                      #1 Ry/a.u. = 25.7110 eV/A
   }
 }
 $atomscell = join "",@atomscell;
+#print  "$atomscell\n";
 @totalforce = `grep -A$atomscell "Forces acting on atoms (cartesian axes, Ry/au):" *.out`;
 for(0..$#totalforce)
 {
-  if($totalforce[$_] =~ m/\s+atom\s+\d+\s+type\s+\d+\s+force\s+\=\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)/g)
+  if($totalforce[$_] =~ m/\s+atom\s+\d+\s+type\s+(\d+)\s+force\s+\=\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)/g)
   {
-      push @force,$1*25.7110,$2*25.7110,$3*25.7110;
+      push @type,$1-1;
+      push @force,$2*25.7110,$3*25.7110,$4*25.7110;
   }    
 }
-$j = -1; 
+$nframe = scalar @energy;
+#print $nframe;
+for (0..$#type/$nframe)
+{
+print $typeraw "@type[$_] ";}
+
 for(0..$#force){
     $j = $j + 1;
     push @newforce,$force[$j];
